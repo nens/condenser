@@ -18,7 +18,36 @@ A fast interface between SQLAlchemy and Numpy
 Features
 --------
 
-* TODO
+The package exposes one object: ``NumpyQuery``, which is used to extend 
+``SQLAlchemy.Query`` objects as follows::
+
+>>> from condenser import NumpyQuery
+>>> # create the session with a custom query class
+>>> session = session_factory(query_cls=NumpyQuery)
+
+
+If a session is constructed like that, every query object will have an
+additional method to dump the selected data into a numpy structured array::
+
+>>> query = session.query(SomeModel.float_type_column, SomeModel.int_type_column)
+>>> my_array = query.as_structarray()
+
+
+Custom dtype mapping
+--------------------
+
+Condenser has a safe approach on guessing the Numpy dtypes from SQLAlchemy
+dtypes. It always takes 8-byte signed integers and floats. For some database
+backends this could be more strict. Override the type mapping when constructing
+the query::
+
+>>> from sqlalchemy import Integer
+>>> query = session.query(SomeModel.float_type_column, type_mapping={Integer: np.int32})
+
+Or globally::
+
+>>> NumpyQuery.default_type_mapping[Integer] = np.int32
+
 
 Credits
 -------

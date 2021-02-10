@@ -1,5 +1,5 @@
 from .schema import Base
-from .schema import TestModel
+from .schema import ModelOne
 from condenser import NumpyQuery
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session
@@ -17,7 +17,7 @@ def db_engine(request):
 
     Base.metadata.create_all(engine)
 
-    record = TestModel(
+    record = ModelOne(
         col_int=2,
         col_str="foo",
         col_float=5.2,

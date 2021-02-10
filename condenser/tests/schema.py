@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-class TestModel(Base):
+class ModelOne(Base):
     __tablename__ = "test_table"
 
     col_int = Column(Integer, primary_key=True)

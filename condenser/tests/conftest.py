@@ -17,8 +17,16 @@ def db_engine(request):
     
     Base.metadata.create_all(engine)
 
+    record = TestModel(
+        col_int=2,
+        col_str="foo",
+        col_float=5.2,
+        col_bool=True,
+        col_text="once upon a time"
+    )
+
     session = session_factory()
-    session.add(TestModel(col_int=2, col_str="a", col_float=5.2))
+    session.add(record)
     session.commit()
     session.close()
 
@@ -32,7 +40,7 @@ def db_session_factory(db_engine):
     return scoped_session(sessionmaker(bind=db_engine))
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='session')
 def db_session(db_session_factory):
     """yields a SQLAlchemy connection which is rollbacked after the test"""
     session = db_session_factory(query_cls=NumpyQuery)

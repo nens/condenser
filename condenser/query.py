@@ -77,7 +77,7 @@ class NumpyQueryMixin:
 
     def as_structarray(self):
         # Cannot use np.fromiter with complex dtypes, so we go through a list
-        return np.array(self.all(), dtype=self.numpy_dtype)
+        return np.array(list(self), dtype=self.numpy_dtype)
 
 
 class NumpyQuery(NumpyQueryMixin, Query):

@@ -2,29 +2,18 @@
 condenser
 =========
 
-
-.. image:: https://img.shields.io/pypi/v/condenser.svg
-        :target: https://pypi.python.org/pypi/condenser
-
-
-
 A fast interface between SQLAlchemy and Numpy
-
-
-* Free software: BSD license
-* Documentation: https://condenser.readthedocs.io.
-
 
 Features
 --------
 
-The package exposes one object: ``NumpyQuery``, which is used to extend 
-``SQLAlchemy.Query`` objects as follows::
+This project aims to read data from SQLAlchemy into structured numpy arrays.
+It provides this function by exposing one object: ``NumpyQuery``, which is used
+as a custom SQLAlchemy query class as follows::
 
 >>> from condenser import NumpyQuery
 >>> # create the session with a custom query class
 >>> session = session_factory(query_cls=NumpyQuery)
-
 
 If a session is constructed like that, every query object will have an
 additional method to dump the selected data into a numpy structured array::

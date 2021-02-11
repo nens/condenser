@@ -2,6 +2,12 @@
 condenser
 =========
 
+.. image:: https://github.com/nens/condenser/workflows/Linux/badge.svg
+        :target: https://github.com/nens/condenser/actions?query=workflow%3ALinux
+
+.. image:: https://img.shields.io/pypi/v/condenser.svg
+        :target: https://pypi.python.org/pypi/condenser
+
 A fast interface between SQLAlchemy and Numpy
 
 Features

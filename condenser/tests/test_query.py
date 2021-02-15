@@ -1,3 +1,4 @@
+from .conftest import requires_geo
 from .schema import ModelOne
 from condenser import NumpyQuery
 
@@ -6,6 +7,11 @@ from sqlalchemy import Integer
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
+
+try:
+    import pygeos
+except ImportError:
+    pass
 
 
 def test_query_cls(db_session):
@@ -30,19 +36,6 @@ def test_numpy_dtype(db_session, entity, expected_type):
     assert q.numpy_dtype[0] == expected_type
 
 
-@pytest.mark.parametrize(
-    "entity,expected_type",
-    [
-        (ModelOne.col_int, np.int32),  # adapted
-        (ModelOne.col_float, np.float64),  # untouched
-    ],
-)
-def test_adapted_numpy_dtype(db_session, entity, expected_type):
-    """Override type_mapping on the query instance"""
-    q = db_session.query(entity, type_mapping={Integer: np.int32})
-    assert q.numpy_dtype[0] == expected_type
-
-
 def test_as_structarray(db_session):
     """Convert all records to a numpy structured array"""
     q = db_session.query(
@@ -60,3 +53,13 @@ def test_as_structarray(db_session):
     )
 
     assert_array_equal(actual, expected)
+
+
+@requires_geo
+def test_geometry(db_session):
+    """Convert all records to a numpy structured array"""
+    q = db_session.query(ModelOne.col_geom)
+    actual = q.as_structarray()
+
+    # see conftest.py
+    assert actual["col_geom"][0] == pygeos.points(2, 3)

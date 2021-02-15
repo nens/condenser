@@ -1,83 +1,100 @@
 import numpy as np
 from collections import defaultdict
+import copy
+from collections import defaultdict
 from sqlalchemy.orm.query import Query
 
-# from sqlalchemy import BigInteger
 from sqlalchemy import Boolean
-
-# from sqlalchemy import Date
-# from sqlalchemy import DateTime
-# from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import Integer
-
-# from sqlalchemy import ForeignKey
-# from sqlalchemy import LargeBinary
-# from sqlalchemy import MatchType
 from sqlalchemy import Numeric
-
-# from sqlalchemy import PickleType
-# from sqlalchemy import SchemaType
-# from sqlalchemy import SmallInteger
 from sqlalchemy import String
 from sqlalchemy import Text
 
-# from sqlalchemy import Time
-# from sqlalchemy import Unicode
-# from sqlalchemy import UnicodeText
-
 
 class NumpyQueryMixin:
-    # casts = {
-    #     Enum: None
-    #     ForeignKey:
-    # }
     # The precise type mapping depends on the dialect.
     # Use 8-bytes to be safe (e.g. SQLite uses that by default)
-    default_type_mapping = {
-        # BigInteger: np.dtype(np.int64),
-        Boolean: np.dtype(np.bool),
-        # Date: np.dtype(np.datetime64),
-        # DateTime: np.dtype(np.datetime64),
-        # Enum:
-        Float: np.dtype(np.float64),
-        Integer: np.dtype(np.int64),  # SQLite may use 8 bytes
-        # Interval: np.dtype(np.timedelta64),
-        # LargeBinary:
-        Numeric: np.dtype(np.float64),
-        # PickleType:
-        # SchemaType:
-        # SmallInteger: np.dtype(np.int16),
-        String: np.dtype("O"),
-        Text: np.dtype("O"),
-        # Time: np.dtype(np.datetime64),
-        # Unicode
-        # UnicodeText
+    default_numpy_settings = {
+        Boolean: {"dtype": np.dtype(np.bool)},
+        Float: {"dtype": np.dtype(np.float64)},
+        Integer: {"dtype": np.dtype(np.int64)},
+        Numeric: {"dtype": np.dtype(np.float64)},
+        String: {"dtype": np.dtype("O")},
+        Text: {"dtype": np.dtype("O")},
     }
+    # Todo: BigInteger, Date, DateTime, Enum, Interval, LargeBinary, PickleType
+    # SchemaType, SmallInteger, Time, Unicode, UnicodeText
+
+    # Geometry is only available if the optional dependencies geoalchemy2 and
+    # pygeos are present.
+    try:
+        from geoalchemy2.types import Geometry
+        from geoalchemy2.functions import ST_AsBinary
+        import pygeos
+
+        default_numpy_settings[Geometry] = {
+            "dtype": np.dtype("O"),
+            "sql_cast": ST_AsBinary,
+            "numpy_cast": pygeos.from_wkb,
+        }
+    except ImportError:
+        pass
 
     def __init__(self, *args, **kwargs):
-        # allow adaptation of the type mapping
-        self.type_mapping = {
-            **self.default_type_mapping,
-            **kwargs.pop("type_mapping", {}),
-        }
+        # deepcopy the numpy settings to allow adaptation
+        self.numpy_settings = copy.deepcopy(self.default_numpy_settings)
         return super().__init__(*args, **kwargs)
 
     @property
     def numpy_dtype(self):
-        return np.dtype(
-            [
-                (
-                    descr["name"],
-                    self.type_mapping.get(descr["type"].__class__, np.dtype("O")),
-                )
-                for descr in self.column_descriptions
-            ]
-        )
+        """Map the SQL Column types to NumPy dtypes (defaulting to object)
+
+        Mapping is done according to self.numpy_settings[:]["dtype"].
+        """
+        result = []
+        for i, descr in enumerate(self.column_descriptions):
+            settings = self.numpy_settings.get(descr["type"].__class__, {})
+            dtype = settings.get("dtype", np.dtype("O"))
+            result.append((descr["name"] or "x{}".format(i), dtype))
+        return np.dtype(result)
+
+    def with_numpy_cast_columns(self):
+        """Cast the entities in this query to numpy-compatible ones
+
+        Casts is done according to self.numpy_settings[:]["sql_cast"].
+        """
+        new_columns = []
+        for descr in self.column_descriptions:
+            settings = self.numpy_settings.get(descr["type"].__class__, {})
+            cast_func = settings.get("sql_cast")
+            if cast_func is not None:
+                new_columns.append(cast_func(descr["expr"]))
+            else:
+                new_columns.append(descr["expr"])
+        # Note: this discards the names of cast columns
+        return self.with_entities(*new_columns)
 
     def as_structarray(self):
+        # Apply casts
+        cast_query = self.with_numpy_cast_columns()
+
+        # Get the numpy dtype
+        dtype = cast_query.numpy_dtype
+
         # Cannot use np.fromiter with complex dtypes, so we go through a list
-        return np.array(list(self), dtype=self.numpy_dtype)
+        arr = np.array(list(cast_query), dtype=dtype)
+
+        # insert the column names back in from the original query (it might
+        # have been lost in the sql typecasts)
+        arr.dtype.names = [x["name"] for x in self.column_descriptions]
+
+        for descr in self.column_descriptions:
+            settings = self.numpy_settings.get(descr["type"].__class__, {})
+            if "numpy_cast" in settings:
+                arr[descr["name"]] = settings["numpy_cast"](arr[descr["name"]])
+
+        return arr
 
 
 class NumpyQuery(NumpyQueryMixin, Query):

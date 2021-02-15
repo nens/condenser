@@ -33,15 +33,16 @@ Custom dtype mapping
 
 Condenser has a safe approach on guessing the Numpy dtypes from SQLAlchemy
 dtypes. It always takes 8-byte signed integers and floats. For some database
-backends this could be more strict. Override the type mapping when constructing
+backends this could be more strict. Override the type mapping after constructing
 the query::
 
 >>> from sqlalchemy import Integer
->>> query = session.query(SomeModel.float_type_column, type_mapping={Integer: np.int32})
+>>> query = session.query(SomeModel.float_type_column)
+>>> NumpyQuery.numpy_settings[Integer]["dtype"] = np.int32
 
 Or globally::
 
->>> NumpyQuery.default_type_mapping[Integer] = np.int32
+>>> NumpyQuery.default_numpy_settings[Integer]["dtype"] = np.int32
 
 
 Credits

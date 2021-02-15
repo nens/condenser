@@ -28,6 +28,7 @@ setup(
     ],
     description="A fast interface between SQLAlchemy and Numpy",
     install_requires=requirements,
+    extras_require={"geo": ["geoalchemy2", "pygeos"]},
     license="BSD license",
     long_description=readme,
     include_package_data=True,

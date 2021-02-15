@@ -56,7 +56,7 @@ class NumpyQueryMixin:
         for i, descr in enumerate(self.column_descriptions):
             settings = self.numpy_settings.get(descr["type"].__class__, {})
             dtype = settings.get("dtype", np.dtype("O"))
-            result.append((descr["name"] or "x{}".format(i), dtype))
+            result.append((descr["name"] or "f{}".format(i), dtype))
         return np.dtype(result)
 
     def with_numpy_cast_columns(self):
@@ -82,12 +82,15 @@ class NumpyQueryMixin:
         # Get the numpy dtype
         dtype = cast_query.numpy_dtype
 
-        # Cannot use np.fromiter with complex dtypes, so we go through a list
-        arr = np.array(list(cast_query), dtype=dtype)
-
         # insert the column names back in from the original query (it might
         # have been lost in the sql typecasts)
-        arr.dtype.names = [x["name"] for x in self.column_descriptions]
+        dtype.names = [
+            (x["name"] or "f{}".format(i))
+            for (i, x) in enumerate(self.column_descriptions)
+        ]
+
+        # Cannot use np.fromiter with complex dtypes, so we go through a list
+        arr = np.array(list(cast_query), dtype=dtype)
 
         for descr in self.column_descriptions:
             settings = self.numpy_settings.get(descr["type"].__class__, {})

@@ -27,7 +27,7 @@ def test_query_cls(db_session):
         (ModelOne.col_float, np.float64),
         (ModelOne.col_str, np.dtype("O")),
         (ModelOne.col_text, np.dtype("O")),
-        (ModelOne.col_bool, np.bool),
+        (ModelOne.col_bool, np.dtype(bool)),
     ],
 )
 def test_numpy_dtype(db_session, entity, expected_type):

@@ -36,6 +36,20 @@ def test_numpy_dtype(db_session, entity, expected_type):
     assert q.numpy_dtype[0] == expected_type
 
 
+@pytest.mark.parametrize(
+    "entity,expected_type",
+    [
+        (ModelOne.col_int, np.int32),  # adapted
+        (ModelOne.col_float, np.float64),  # untouched
+    ],
+)
+def test_adapted_numpy_dtype(db_session, entity, expected_type):
+    """Override type_mapping on the query instance"""
+    q = db_session.query(entity)
+    q.numpy_settings[Integer]["dtype"] = np.int32
+    assert q.numpy_dtype[0] == expected_type
+    
+
 def test_as_structarray(db_session):
     """Convert all records to a numpy structured array"""
     q = db_session.query(

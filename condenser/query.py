@@ -42,13 +42,13 @@ class NumpyQueryMixin:
         pass
 
     def __init__(self, *args, **kwargs):
-        # deepcopy the numpy settings to allow adaptation
+        # deepcopy the numpy settings to allow per-query adaptation
         self.numpy_settings = copy.deepcopy(self.default_numpy_settings)
         return super().__init__(*args, **kwargs)
 
     @property
     def numpy_dtype(self):
-        """Map the SQL Column types to NumPy dtypes (defaulting to object)
+        """Map the SQL column types to numpy dtypes (defaulting to object).
 
         Mapping is done according to self.numpy_settings[:]["dtype"].
         """
@@ -60,7 +60,7 @@ class NumpyQueryMixin:
         return np.dtype(result)
 
     def with_numpy_cast_columns(self):
-        """Cast the entities in this query to numpy-compatible ones
+        """Cast the entities in this query to numpy-compatible ones.
 
         Casts is done according to self.numpy_settings[:]["sql_cast"].
         """
@@ -76,6 +76,11 @@ class NumpyQueryMixin:
         return self.with_entities(*new_columns)
 
     def as_structarray(self):
+        """Read all records from this query into a numpy structured array.
+
+        Specific types are converted into numpy datatypes. This is configured
+        through ``self.numpy_settings``.
+        """
         # Apply casts
         cast_query = self.with_numpy_cast_columns()
 
@@ -92,10 +97,12 @@ class NumpyQueryMixin:
         # Cannot use np.fromiter with complex dtypes, so we go through a list
         arr = np.array(list(cast_query), dtype=dtype)
 
+        # Execute numpy typecasts if present
         for descr in self.column_descriptions:
             settings = self.numpy_settings.get(descr["type"].__class__, {})
-            if "numpy_cast" in settings:
-                arr[descr["name"]] = settings["numpy_cast"](arr[descr["name"]])
+            numpy_cast = settings.get("numpy_cast")
+            if numpy_cast is not None:
+                arr[descr["name"]] = numpy_cast(arr[descr["name"]])
 
         return arr
 

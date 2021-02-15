@@ -1,6 +1,11 @@
 name: Linux
 
-on: [push, pull_request]
+# Run on PR requests. And on master itself.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   TestLinux:

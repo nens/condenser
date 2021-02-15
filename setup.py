@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 with open('README.rst') as readme_file:
     readme = readme_file.read()
 
-requirements = [ ]
+requirements = ["sqlalchemy", "numpy"]
 
 test_requirements = ['pytest>=3', ]
 
@@ -34,9 +34,8 @@ setup(
     keywords='condenser',
     name='condenser',
     packages=find_packages(include=['condenser', 'condenser.*']),
-    test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/caspervdw/condenser',
+    url='https://github.com/nens/condenser',
     version='0.1.0',
     zip_safe=False,
 )

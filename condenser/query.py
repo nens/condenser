@@ -16,7 +16,7 @@ class NumpyQueryMixin:
     # The precise type mapping depends on the dialect.
     # Use 8-bytes to be safe (e.g. SQLite uses that by default)
     default_numpy_settings = {
-        Boolean: {"dtype": np.dtype(np.bool)},
+        Boolean: {"dtype": np.dtype(bool)},
         Float: {"dtype": np.dtype(np.float64)},
         Integer: {"dtype": np.dtype(np.int64)},
         Numeric: {"dtype": np.dtype(np.float64)},

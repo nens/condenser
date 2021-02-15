@@ -45,12 +45,16 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Install sqlite3 and spatialite libraries
+        run: |
+          sudo apt-get install --yes --no-install-recommends sqlite3 libsqlite3-mod-spatialite
+
       - name: Install python dependencies
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
           pip install ${{ matrix.deps }}
-          pip install -e .[test,geo]
+          pip install -e .[test]
           pip list
 
       - name: Run tests

@@ -1,7 +1,7 @@
 from .schema import Base
 from .schema import ModelOne
 from condenser import NumpyQuery
-from condenser.utils import load_spatialite
+from condenser.utils import load_spatialite, has_geo
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
@@ -9,14 +9,6 @@ from sqlalchemy.event import listen
 from sqlalchemy.sql import select, func
 
 import pytest
-
-try:
-    from geoalchemy2.types import Geometry  # NOQA
-    import pygeos  # NOQA
-
-    has_geo = True
-except ImportError:
-    has_geo = False
 
 requires_geo = pytest.mark.skipif(not has_geo, reason="requires GeoAlchemy2 and pygeos")
 
@@ -45,6 +37,7 @@ def db_engine(request):
     )
     if has_geo:
         record.col_geom = "POINT (2 3)"
+        record.col_geom_4326 = "SRID=4326;POINT (0 0)"
 
     session = session_factory()
     session.add(record)

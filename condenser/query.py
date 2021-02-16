@@ -4,10 +4,18 @@ from sqlalchemy import Integer
 from sqlalchemy import Numeric
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy import func
 from sqlalchemy.orm.query import Query
+
+from .utils import has_geo
 
 import copy
 import numpy as np
+
+if has_geo:
+    from geoalchemy2.types import Geometry
+    from geoalchemy2.functions import ST_AsBinary, ST_Transform, ST_SetSRID
+    import pygeos
 
 
 class NumpyQueryMixin:
@@ -26,18 +34,12 @@ class NumpyQueryMixin:
 
     # Geometry is only available if the optional dependencies geoalchemy2 and
     # pygeos are present.
-    try:
-        from geoalchemy2.types import Geometry
-        from geoalchemy2.functions import ST_AsBinary
-        import pygeos
-
+    if has_geo:
         default_numpy_settings[Geometry] = {
             "dtype": np.dtype("O"),
             "sql_cast": ST_AsBinary,
             "numpy_cast": pygeos.from_wkb,
         }
-    except ImportError:
-        pass
 
     def __init__(self, *args, **kwargs):
         # deepcopy the numpy settings to allow per-query adaptation
@@ -103,6 +105,19 @@ class NumpyQueryMixin:
                 arr[descr["name"]] = numpy_cast(arr[descr["name"]])
 
         return arr
+
+    def transform_geom(self, srid):
+        if not has_geo:
+            raise ImportError("This function requires GeoAlchemy2 and pygeos")
+        srid = int(srid)
+        new_columns = []
+        for descr in self.column_descriptions:
+            if descr["type"].__class__ == Geometry:
+                new_columns.append(ST_Transform(descr["expr"], srid))
+            else:
+                new_columns.append(descr["expr"])
+        # Note: this discards the names of cast columns
+        return self.with_entities(*new_columns)
 
 
 class NumpyQuery(NumpyQueryMixin, Query):

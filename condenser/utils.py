@@ -1,3 +1,11 @@
+try:
+    import geoalchemy2  # NOQA
+    import pygeos  # NOQA
+    has_geo = True
+except ImportError:
+    has_geo = False
+
+
 def load_spatialite(con, connection_record):
     """Load spatialite extension as described in
     https://geoalchemy-2.readthedocs.io/en/latest/spatialite_tutorial.html"""

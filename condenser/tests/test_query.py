@@ -77,3 +77,13 @@ def test_geometry(db_session):
 
     # see conftest.py
     assert actual["col_geom"][0] == pygeos.points(2, 3)
+
+
+@requires_geo
+def test_geometry_transform(db_session):
+    """Convert all records to a numpy structured array"""
+    q = db_session.query(ModelOne.col_geom_4326).transform_geom(3857)
+    actual = q.as_structarray()
+
+    # see conftest.py
+    assert actual["col_geom"][0] == pygeos.points(2, 3)

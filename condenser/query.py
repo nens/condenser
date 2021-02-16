@@ -1,7 +1,5 @@
 import numpy as np
-from collections import defaultdict
 import copy
-from collections import defaultdict
 from sqlalchemy.orm.query import Query
 
 from sqlalchemy import Boolean

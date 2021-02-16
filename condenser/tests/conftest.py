@@ -8,12 +8,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.event import listen
 from sqlalchemy.sql import select, func
 
-import os
 import pytest
 
 try:
-    from geoalchemy2.types import Geometry
-    import pygeos
+    from geoalchemy2.types import Geometry  # NOQA
+    import pygeos  # NOQA
 
     has_geo = True
 except ImportError:

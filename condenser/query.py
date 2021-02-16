@@ -1,13 +1,13 @@
-import numpy as np
-import copy
-from sqlalchemy.orm.query import Query
-
 from sqlalchemy import Boolean
 from sqlalchemy import Float
 from sqlalchemy import Integer
 from sqlalchemy import Numeric
 from sqlalchemy import String
 from sqlalchemy import Text
+from sqlalchemy.orm.query import Query
+
+import copy
+import numpy as np
 
 
 class NumpyQueryMixin:

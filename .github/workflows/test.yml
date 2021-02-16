@@ -9,7 +9,7 @@ on:
 
 jobs:
   TestLinux:
-    name: Python ${{ matrix.python }}
+    name: Python ${{ matrix.python }} ${{ matrix.display_name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -17,20 +17,24 @@ jobs:
         include:
           # 2017
           - python: 3.6
-            numpy: 1.13.3
-            sqlalchemy: 1.1
+            deps: "numpy==1.13.* sqlalchemy==1.1.* geoalchemy2==0.6.* pygeos==0.7.*"
           # 2018
           - python: 3.7
-            numpy: 1.15.4
-            sqlalchemy: 1.2
+            deps: "numpy==1.15.* sqlalchemy==1.2.* geoalchemy2==0.6.* pygeos==0.7.*"
           # 2019
           - python: 3.8
-            numpy: 1.17.5
-            sqlalchemy: 1.3
+            deps: "numpy==1.17.* sqlalchemy==1.3.* geoalchemy2==0.6.* pygeos==0.8.*"
+          # 2020
+          - python: 3.9
+            deps: "numpy==1.19.* sqlalchemy==1.3.* geoalchemy2==0.7.* pygeos==0.9.*"
           # current
           - python: 3.9
-            numpy: "1.*"
-            sqlalchemy: "1.*"
+            display_name: "latest"
+            deps: "numpy sqlalchemy geoalchemy2 pygeos"
+          # current - no optional deps
+          - python: 3.9
+            display_name: "no geo"
+            deps: "numpy sqlalchemy"
 
 
     steps:
@@ -41,11 +45,16 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Install sqlite3 and spatialite libraries
+        run: |
+          sudo apt-get install --yes --no-install-recommends sqlite3 libsqlite3-mod-spatialite
+
       - name: Install python dependencies
         shell: bash
         run: |
           pip install --disable-pip-version-check --upgrade pip setuptools wheel
-          pip install pytest numpy==${{ matrix.numpy }} sqlalchemy==${{ matrix.sqlalchemy }}
+          pip install ${{ matrix.deps }}
+          pip install -e .[test]
           pip list
 
       - name: Run tests

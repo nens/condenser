@@ -82,7 +82,7 @@ def test_geometry(db_session):
 @requires_geo
 def test_geometry_transform(db_session):
     """Reproject a column that has 4326 projection"""
-    q = db_session.query(ModelOne.col_geom_4326).transform_geom(3857)
+    q = db_session.query(ModelOne.col_geom_4326).with_transformed_geometries(3857)
     actual = q.as_structarray()
 
     # see conftest.py for the EPSG4326 coordinates
@@ -94,7 +94,7 @@ def test_geometry_transform(db_session):
 @requires_geo
 def test_geometry_transform_unknown_input_srid(db_session):
     """Attempt to reproject a column that has no projection"""
-    q = db_session.query(ModelOne.col_geom).transform_geom(3857)
+    q = db_session.query(ModelOne.col_geom).with_transformed_geometries(3857)
     actual = q.as_structarray()
 
     # see conftest.py

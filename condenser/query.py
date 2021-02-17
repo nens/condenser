@@ -79,7 +79,9 @@ class NumpyQueryMixin:
         return self.with_entities(*new_columns)
 
     def as_structarray(self):
-        """Read all records from this query into a numpy structured array.
+        """Read all entities in this query into a numpy structured array.
+
+        Every entity is mapped to a column in the structured array.
 
         Specific types are converted into numpy datatypes. This is configured
         through ``self.numpy_settings``.
@@ -102,8 +104,18 @@ class NumpyQueryMixin:
 
         return arr
 
-    def transform_geom(self, target_srid):
-        """Transform all SRID-aware columns to given target SRID"""
+    def with_transformed_geometries(self, target_srid):
+        """Transform all SRID-aware columns to given target SRID
+
+        Args:
+          target_srid (int): The SRID to reproject the geometries into.
+
+        See also:
+          Columns that are not SRID-aware do not support coordinate
+          transformations. If an SRID is known from metadata, use a function
+          appropriate to your database backend to set it (e.g. `ST_SetSRID`
+          for PostGIS and `setsrid` for SQLite/spatialite)
+        """
         if not has_geo:
             raise ImportError("This function requires GeoAlchemy2 and pygeos")
         srid = int(target_srid)

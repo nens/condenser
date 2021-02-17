@@ -6,7 +6,7 @@ from sqlalchemy import Integer
 
 import pytest
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_almost_equal
 
 try:
     import pygeos
@@ -71,7 +71,7 @@ def test_as_structarray(db_session):
 
 @requires_geo
 def test_geometry(db_session):
-    """Convert all records to a numpy structured array"""
+    """Convert geometry fields to a array of pygeos geometries"""
     q = db_session.query(ModelOne.col_geom)
     actual = q.as_structarray()
 
@@ -81,8 +81,20 @@ def test_geometry(db_session):
 
 @requires_geo
 def test_geometry_transform(db_session):
-    """Convert all records to a numpy structured array"""
+    """Reproject a column that has 4326 projection"""
     q = db_session.query(ModelOne.col_geom_4326).transform_geom(3857)
+    actual = q.as_structarray()
+
+    # see conftest.py for the EPSG4326 coordinates
+    assert_almost_equal(
+        pygeos.get_coordinates(actual["col_geom_4326"]), [[569472, 6816930]], decimal=0
+    )
+
+
+@requires_geo
+def test_geometry_transform_unknown_input_srid(db_session):
+    """Attempt to reproject a column that has no projection"""
+    q = db_session.query(ModelOne.col_geom).transform_geom(3857)
     actual = q.as_structarray()
 
     # see conftest.py

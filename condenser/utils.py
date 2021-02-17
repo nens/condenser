@@ -1,6 +1,7 @@
 try:
     import geoalchemy2  # NOQA
     import pygeos  # NOQA
+
     has_geo = True
 except ImportError:
     has_geo = False

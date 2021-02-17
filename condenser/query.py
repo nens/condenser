@@ -1,20 +1,19 @@
+from .utils import has_geo
 from sqlalchemy import Boolean
 from sqlalchemy import Float
 from sqlalchemy import Integer
 from sqlalchemy import Numeric
 from sqlalchemy import String
 from sqlalchemy import Text
-from sqlalchemy import func
 from sqlalchemy.orm.query import Query
-
-from .utils import has_geo
 
 import copy
 import numpy as np
 
+
 if has_geo:
     from geoalchemy2.types import Geometry
-    from geoalchemy2.functions import ST_AsBinary, ST_Transform, ST_SetSRID
+    from geoalchemy2.functions import ST_AsBinary, ST_Transform
     import pygeos
 
 
@@ -63,13 +62,17 @@ class NumpyQueryMixin:
         """Cast the entities in this query to numpy-compatible ones.
 
         Casts is done according to self.numpy_settings[:]["sql_cast"].
+        Also, the column labels are set to f{column_number} if not present.
         """
         new_columns = []
-        for descr in self.column_descriptions:
+        for i, descr in enumerate(self.column_descriptions):
             settings = self.numpy_settings.get(descr["type"].__class__, {})
             cast_func = settings.get("sql_cast")
+            label = descr["name"] or "f{}".format(i)
             if cast_func is not None:
-                new_columns.append(cast_func(descr["expr"]))
+                new_columns.append(cast_func(descr["expr"]).label(label))
+            elif descr["name"] is None:
+                new_columns.append(descr["expr"].label(label))
             else:
                 new_columns.append(descr["expr"])
         # Note: this discards the names of cast columns
@@ -87,13 +90,6 @@ class NumpyQueryMixin:
         # Get the numpy dtype
         dtype = cast_query.numpy_dtype
 
-        # insert the column names back in from the original query (it might
-        # have been lost in the sql typecasts)
-        dtype.names = [
-            (x["name"] or "f{}".format(i))
-            for (i, x) in enumerate(self.column_descriptions)
-        ]
-
         # Cannot use np.fromiter with complex dtypes, so we go through a list
         arr = np.array(list(cast_query), dtype=dtype)
 
@@ -106,14 +102,17 @@ class NumpyQueryMixin:
 
         return arr
 
-    def transform_geom(self, srid):
+    def transform_geom(self, target_srid):
+        """Transform all SRID-aware columns to given target SRID"""
         if not has_geo:
             raise ImportError("This function requires GeoAlchemy2 and pygeos")
-        srid = int(srid)
+        srid = int(target_srid)
         new_columns = []
         for descr in self.column_descriptions:
-            if descr["type"].__class__ == Geometry:
-                new_columns.append(ST_Transform(descr["expr"], srid))
+            if descr["type"].__class__ == Geometry and descr["type"].srid > 0:
+                new_columns.append(
+                    ST_Transform(descr["expr"], srid).label(descr["name"])
+                )
             else:
                 new_columns.append(descr["expr"])
         # Note: this discards the names of cast columns

@@ -37,7 +37,7 @@ def db_engine(request):
     )
     if has_geo:
         record.col_geom = "POINT (2 3)"
-        record.col_geom_4326 = "SRID=4326;POINT (0 0)"
+        record.col_geom_4326 = "SRID=4326;POINT (5.115651 52.092840)"
 
     session = session_factory()
     session.add(record)

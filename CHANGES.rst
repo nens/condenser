@@ -23,3 +23,5 @@ Changelog of threedi-modelchecker
 
 - Added optional dependency ``condenser[geo]`` which enables bulk reading of
   Geometry columns through GeoAlchemy2 into an array of ``pygeos.Geometry``.
+
+- Added ``NumpyQuery().with_transformed_geometries``.

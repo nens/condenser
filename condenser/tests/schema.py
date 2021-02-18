@@ -22,5 +22,8 @@ class ModelOne(Base):
         from geoalchemy2.types import Geometry
 
         col_geom = Column(Geometry(geometry_type="POINT", management=True))
+        col_geom_4326 = Column(
+            Geometry(geometry_type="POINT", management=True, srid=4326)
+        )
     except ImportError:
         pass

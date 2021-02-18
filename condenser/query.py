@@ -1,3 +1,4 @@
+from .utils import has_geo
 from sqlalchemy import Boolean
 from sqlalchemy import Float
 from sqlalchemy import Integer
@@ -8,6 +9,12 @@ from sqlalchemy.orm.query import Query
 
 import copy
 import numpy as np
+
+
+if has_geo:
+    from geoalchemy2.types import Geometry
+    from geoalchemy2.functions import ST_AsBinary, ST_Transform
+    import pygeos
 
 
 class NumpyQueryMixin:
@@ -26,18 +33,12 @@ class NumpyQueryMixin:
 
     # Geometry is only available if the optional dependencies geoalchemy2 and
     # pygeos are present.
-    try:
-        from geoalchemy2.types import Geometry
-        from geoalchemy2.functions import ST_AsBinary
-        import pygeos
-
+    if has_geo:
         default_numpy_settings[Geometry] = {
             "dtype": np.dtype("O"),
             "sql_cast": ST_AsBinary,
             "numpy_cast": pygeos.from_wkb,
         }
-    except ImportError:
-        pass
 
     def __init__(self, *args, **kwargs):
         # deepcopy the numpy settings to allow per-query adaptation
@@ -61,20 +62,26 @@ class NumpyQueryMixin:
         """Cast the entities in this query to numpy-compatible ones.
 
         Casts is done according to self.numpy_settings[:]["sql_cast"].
+        Also, the column labels are set to f{column_number} if not present.
         """
         new_columns = []
-        for descr in self.column_descriptions:
+        for i, descr in enumerate(self.column_descriptions):
             settings = self.numpy_settings.get(descr["type"].__class__, {})
             cast_func = settings.get("sql_cast")
+            label = descr["name"] or "f{}".format(i)
             if cast_func is not None:
-                new_columns.append(cast_func(descr["expr"]))
+                new_columns.append(cast_func(descr["expr"]).label(label))
+            elif descr["name"] is None:
+                new_columns.append(descr["expr"].label(label))
             else:
                 new_columns.append(descr["expr"])
         # Note: this discards the names of cast columns
         return self.with_entities(*new_columns)
 
     def as_structarray(self):
-        """Read all records from this query into a numpy structured array.
+        """Read all entities in this query into a numpy structured array.
+
+        Every entity is mapped to a column in the structured array.
 
         Specific types are converted into numpy datatypes. This is configured
         through ``self.numpy_settings``.
@@ -84,13 +91,6 @@ class NumpyQueryMixin:
 
         # Get the numpy dtype
         dtype = cast_query.numpy_dtype
-
-        # insert the column names back in from the original query (it might
-        # have been lost in the sql typecasts)
-        dtype.names = [
-            (x["name"] or "f{}".format(i))
-            for (i, x) in enumerate(self.column_descriptions)
-        ]
 
         # Cannot use np.fromiter with complex dtypes, so we go through a list
         arr = np.array(list(cast_query), dtype=dtype)
@@ -103,6 +103,32 @@ class NumpyQueryMixin:
                 arr[descr["name"]] = numpy_cast(arr[descr["name"]])
 
         return arr
+
+    def with_transformed_geometries(self, target_srid):
+        """Transform all SRID-aware columns to given target SRID
+
+        Args:
+          target_srid (int): The SRID to reproject the geometries into.
+
+        See also:
+          Columns that are not SRID-aware do not support coordinate
+          transformations. If an SRID is known from metadata, use a function
+          appropriate to your database backend to set it (e.g. `ST_SetSRID`
+          for PostGIS and `setsrid` for SQLite/spatialite)
+        """
+        if not has_geo:
+            raise ImportError("This function requires GeoAlchemy2 and pygeos")
+        srid = int(target_srid)
+        new_columns = []
+        for descr in self.column_descriptions:
+            if descr["type"].__class__ == Geometry and descr["type"].srid > 0:
+                new_columns.append(
+                    ST_Transform(descr["expr"], srid).label(descr["name"])
+                )
+            else:
+                new_columns.append(descr["expr"])
+        # Note: this discards the names of cast columns
+        return self.with_entities(*new_columns)
 
 
 class NumpyQuery(NumpyQueryMixin, Query):

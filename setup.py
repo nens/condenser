@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-"""The setup script."""
-
 from setuptools import setup, find_packages
 
 with open("README.rst") as readme_file:
@@ -10,17 +8,17 @@ with open("README.rst") as readme_file:
 setup(
     author="Casper van der Wel",
     author_email="caspervdw@gmail.com",
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     description="A fast interface between SQLAlchemy and Numpy",
     install_requires=["sqlalchemy>=1.1", "numpy>=1.13"],

@@ -1,5 +1,5 @@
-Changelog of threedi-modelchecker
-=================================
+Changelog of condenser
+======================
 
 0.1.0 (unreleased)
 ------------------
@@ -14,7 +14,7 @@ Changelog of threedi-modelchecker
 
 - Implemented ``NumpyQuery().as_structarray``.
 
-- Implemented ``NumpyQuery().with_numpy_cast_columns``.
+- Implemented ``NumpyQuery().with_numpy_entities``.
 
 - Implemented ``NumpyQuery().numpy_settings`` and 
   ``NumpyQuery.default_numpy_settings``.
@@ -25,3 +25,5 @@ Changelog of threedi-modelchecker
   Geometry columns through GeoAlchemy2 into an array of ``pygeos.Geometry``.
 
 - Added ``NumpyQuery().with_transformed_geometries``.
+
+- Added NULL handling.

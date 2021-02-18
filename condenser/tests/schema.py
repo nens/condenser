@@ -12,18 +12,21 @@ Base = declarative_base()
 class ModelOne(Base):
     __tablename__ = "test_table"
 
-    col_int = Column(Integer, primary_key=True)
-    col_bool = Column(Boolean)
-    col_str = Column(String(32))
-    col_text = Column(Text)
-    col_float = Column(Float)
+    pk = Column(Integer, primary_key=True)
+    col_int = Column(Integer, nullable=True)
+    col_bool = Column(Boolean, nullable=True)
+    col_str = Column(String(32), nullable=True)
+    col_text = Column(Text, nullable=True)
+    col_float = Column(Float, nullable=True)
 
     try:
         from geoalchemy2.types import Geometry
 
-        col_geom = Column(Geometry(geometry_type="POINT", management=True))
+        col_geom = Column(
+            Geometry(geometry_type="POINT", management=True), nullable=True
+        )
         col_geom_4326 = Column(
-            Geometry(geometry_type="POINT", management=True, srid=4326)
+            Geometry(geometry_type="POINT", management=True, srid=4326), nullable=True
         )
     except ImportError:
         pass

@@ -1,12 +1,18 @@
 from .conftest import requires_geo
 from .schema import ModelOne
 from condenser import NumpyQuery
-
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_equal
+from sqlalchemy import Boolean
+from sqlalchemy import Float
 from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import Text
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_equal, assert_almost_equal
+import pytest
+
 
 try:
     import pygeos
@@ -50,7 +56,7 @@ def test_adapted_numpy_dtype(db_session, entity, expected_type):
     assert q.numpy_dtype[0] == expected_type
 
 
-def test_as_structarray(db_session):
+def test_as_structarray(db_session, record):
     """Convert all records to a numpy structured array"""
     q = db_session.query(
         ModelOne.col_int,
@@ -69,8 +75,55 @@ def test_as_structarray(db_session):
     assert_array_equal(actual, expected)
 
 
+def test_as_structarray_null(db_session, record_null):
+    """Convert all records to a numpy structured array"""
+    q = db_session.query(
+        ModelOne.col_int,
+        ModelOne.col_float,
+        ModelOne.col_str,
+        ModelOne.col_text,
+        ModelOne.col_bool,
+    )
+    actual = q.as_structarray()
+
+    assert actual.dtype == q.numpy_dtype
+
+    # compare element by element (to be able to check nans)
+    assert actual["col_int"][0] == -1
+    assert np.isnan(actual["col_float"][0])
+    assert actual["col_str"][0] is None
+    assert actual["col_text"][0] is None
+    assert actual["col_bool"][0] == False
+
+
+def test_adapted_null_values(db_session, record_null):
+    """Convert all records to a numpy structured array"""
+    q = db_session.query(
+        ModelOne.col_int,
+        ModelOne.col_float,
+        ModelOne.col_str,
+        ModelOne.col_text,
+        ModelOne.col_bool,
+    )
+    q.numpy_settings[Integer]["null"] = -9999
+    q.numpy_settings[Float]["null"] = 1e26
+    q.numpy_settings[String]["null"] = ""
+    q.numpy_settings[Text]["null"] = "empty"
+    q.numpy_settings[Boolean]["null"] = True
+    actual = q.as_structarray()
+
+    assert actual.dtype == q.numpy_dtype
+
+    # compare element by element (to be able to check nans)
+    assert actual["col_int"][0] == -9999
+    assert actual["col_float"][0] == pytest.approx(1e26)
+    assert actual["col_str"][0] == ""
+    assert actual["col_text"][0] == "empty"
+    assert actual["col_bool"][0] == True
+
+
 @requires_geo
-def test_geometry(db_session):
+def test_geometry(db_session, record):
     """Convert geometry fields to a array of pygeos geometries"""
     q = db_session.query(ModelOne.col_geom)
     actual = q.as_structarray()
@@ -80,7 +133,16 @@ def test_geometry(db_session):
 
 
 @requires_geo
-def test_geometry_transform(db_session):
+def test_geometry_null(db_session, record_null):
+    """Convert geometry fields to a array of pygeos geometries"""
+    q = db_session.query(ModelOne.col_geom)
+    actual = q.as_structarray()
+
+    assert actual["col_geom"][0] == None
+
+
+@requires_geo
+def test_geometry_transform(db_session, record):
     """Reproject a column that has 4326 projection"""
     q = db_session.query(ModelOne.col_geom_4326).with_transformed_geometries(3857)
     actual = q.as_structarray()
@@ -92,7 +154,7 @@ def test_geometry_transform(db_session):
 
 
 @requires_geo
-def test_geometry_transform_unknown_input_srid(db_session):
+def test_geometry_transform_unknown_input_srid(db_session, record):
     """Attempt to reproject a column that has no projection"""
     q = db_session.query(ModelOne.col_geom).with_transformed_geometries(3857)
     actual = q.as_structarray()

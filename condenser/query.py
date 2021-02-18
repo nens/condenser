@@ -1,6 +1,7 @@
 from .utils import has_geo
 from sqlalchemy import Boolean
 from sqlalchemy import Float
+from sqlalchemy import func
 from sqlalchemy import Integer
 from sqlalchemy import Numeric
 from sqlalchemy import String
@@ -23,7 +24,7 @@ class NumpyQueryMixin:
     default_numpy_settings = {
         Boolean: {"dtype": np.dtype(bool)},
         Float: {"dtype": np.dtype(np.float64)},
-        Integer: {"dtype": np.dtype(np.int64)},
+        Integer: {"dtype": np.dtype(np.int64), "null": -1},
         Numeric: {"dtype": np.dtype(np.float64)},
         String: {"dtype": np.dtype("O")},
         Text: {"dtype": np.dtype("O")},
@@ -58,25 +59,30 @@ class NumpyQueryMixin:
             result.append((descr["name"] or "f{}".format(i), dtype))
         return np.dtype(result)
 
-    def with_numpy_cast_columns(self):
-        """Cast the entities in this query to numpy-compatible ones.
+    def with_numpy_entities(self):
+        """Convert the entities in this query to numpy-compatible ones.
 
-        Casts is done according to self.numpy_settings[:]["sql_cast"].
-        Also, the column labels are set to f{column_number} if not present.
+        - SQL casts are done according to self.numpy_settings[:]["sql_cast"]
+        - NULL values are replaced according to self.numpy_settings[:]["null"]
+        - column labels are set to "f{entity_number}" if not present
         """
-        new_columns = []
+        new_expressions = []
         for i, descr in enumerate(self.column_descriptions):
             settings = self.numpy_settings.get(descr["type"].__class__, {})
+            expr = descr["expr"]
+
             cast_func = settings.get("sql_cast")
-            label = descr["name"] or "f{}".format(i)
             if cast_func is not None:
-                new_columns.append(cast_func(descr["expr"]).label(label))
-            elif descr["name"] is None:
-                new_columns.append(descr["expr"].label(label))
-            else:
-                new_columns.append(descr["expr"])
-        # Note: this discards the names of cast columns
-        return self.with_entities(*new_columns)
+                expr = cast_func(expr)
+
+            null_value = settings.get("null")
+            if null_value is not None:
+                expr = func.coalesce(expr, null_value)
+
+            expr = expr.label(descr["name"] or "f{}".format(i))
+
+            new_expressions.append(expr)
+        return self.with_entities(*new_expressions)
 
     def as_structarray(self):
         """Read all entities in this query into a numpy structured array.
@@ -87,7 +93,7 @@ class NumpyQueryMixin:
         through ``self.numpy_settings``.
         """
         # Apply casts
-        cast_query = self.with_numpy_cast_columns()
+        cast_query = self.with_numpy_entities()
 
         # Get the numpy dtype
         dtype = cast_query.numpy_dtype

@@ -28,22 +28,6 @@ def db_engine(request):
 
     Base.metadata.create_all(engine)
 
-    record = ModelOne(
-        col_int=2,
-        col_str="foo",
-        col_float=5.2,
-        col_bool=True,
-        col_text="once upon a time",
-    )
-    if has_geo:
-        record.col_geom = "POINT (2 3)"
-        record.col_geom_4326 = "SRID=4326;POINT (5.115651 52.092840)"
-
-    session = session_factory()
-    session.add(record)
-    session.commit()
-    session.close()
-
     yield engine
     engine.dispose()
 
@@ -63,3 +47,28 @@ def db_session(db_session_factory):
 
     session.rollback()
     session.close()
+
+
+@pytest.fixture
+def record(db_session):
+    record = ModelOne(
+        col_int=2,
+        col_str="foo",
+        col_float=5.2,
+        col_bool=True,
+        col_text="once upon a time",
+    )
+    if has_geo:
+        record.col_geom = "POINT (2 3)"
+        record.col_geom_4326 = "SRID=4326;POINT (5.115651 52.092840)"
+
+    db_session.add(record)
+    return record
+
+
+@pytest.fixture
+def record_null(db_session):
+    record = ModelOne()
+
+    db_session.add(record)
+    return record

@@ -1,7 +1,7 @@
 Changelog of condenser
 ======================
 
-0.1.0 (unreleased)
+0.1.0 (2021-02-22)
 ------------------
 
 - Basic project structure.

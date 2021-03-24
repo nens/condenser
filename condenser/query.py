@@ -92,14 +92,15 @@ class NumpyQueryMixin:
         Specific types are converted into numpy datatypes. This is configured
         through ``self.numpy_settings``.
         """
-        # Apply casts
+        # Apply casts and get the data
         cast_query = self.with_numpy_entities()
+        data = list(cast_query)
 
-        # Get the numpy dtype
-        dtype = cast_query.numpy_dtype
-
-        # Cannot use np.fromiter with complex dtypes, so we go through a list
-        arr = np.array(list(cast_query), dtype=dtype)
+        # Cannot use np.fromiter or np.array directly (because have a list
+        # of tuples/Row instances to iterate over)
+        arr = np.empty((len(data),), dtype=cast_query.numpy_dtype)
+        for i in range(len(data)):
+            arr[i] = tuple(data[i])
 
         # Execute numpy typecasts if present
         for descr in self.column_descriptions:

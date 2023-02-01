@@ -17,7 +17,7 @@ setup(
         "Programming Language :: Python :: 3",
     ],
     description="A fast interface between SQLAlchemy and Numpy",
-    install_requires=["sqlalchemy>=1.1", "numpy>=1.15"],
+    install_requires=["sqlalchemy>=1.3", "numpy>=1.15"],
     extras_require={"test": ["pytest>=3"], "geo": ["geoalchemy2>=0.6", "shapely>=2"]},
     license="BSD license",
     long_description=readme,

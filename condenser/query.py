@@ -15,7 +15,7 @@ import numpy as np
 if has_geo:
     from geoalchemy2.types import Geometry
     from geoalchemy2.functions import ST_AsBinary, ST_Transform
-    import pygeos
+    import shapely
 
 
 class NumpyQueryMixin:
@@ -38,7 +38,7 @@ class NumpyQueryMixin:
         default_numpy_settings[Geometry] = {
             "dtype": np.dtype("O"),
             "sql_cast": ST_AsBinary,
-            "numpy_cast": pygeos.from_wkb,
+            "numpy_cast": shapely.from_wkb,
         }
 
     def __init__(self, *args, **kwargs):

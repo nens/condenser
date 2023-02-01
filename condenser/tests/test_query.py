@@ -15,7 +15,7 @@ import pytest
 
 
 try:
-    import pygeos
+    import shapely
 except ImportError:
     pass
 
@@ -124,17 +124,17 @@ def test_adapted_null_values(db_session, record_null):
 
 @requires_geo
 def test_geometry(db_session, record):
-    """Convert geometry fields to a array of pygeos geometries"""
+    """Convert geometry fields to a array of shapely geometries"""
     q = db_session.query(ModelOne.col_geom)
     actual = q.as_structarray()
 
     # see conftest.py
-    assert actual["col_geom"][0] == pygeos.points(2, 3)
+    assert actual["col_geom"][0] == shapely.points(2, 3)
 
 
 @requires_geo
 def test_geometry_null(db_session, record_null):
-    """Convert geometry fields to a array of pygeos geometries"""
+    """Convert geometry fields to a array of shapely geometries"""
     q = db_session.query(ModelOne.col_geom)
     actual = q.as_structarray()
 
@@ -149,7 +149,7 @@ def test_geometry_transform(db_session, record):
 
     # see conftest.py for the EPSG4326 coordinates
     assert_almost_equal(
-        pygeos.get_coordinates(actual["col_geom_4326"]), [[569472, 6816930]], decimal=0
+        shapely.get_coordinates(actual["col_geom_4326"]), [[569472, 6816930]], decimal=0
     )
 
 
@@ -160,4 +160,4 @@ def test_geometry_transform_unknown_input_srid(db_session, record):
     actual = q.as_structarray()
 
     # see conftest.py
-    assert actual["col_geom"][0] == pygeos.points(2, 3)
+    assert actual["col_geom"][0] == shapely.points(2, 3)

@@ -1,6 +1,6 @@
 try:
     import geoalchemy2  # NOQA
-    import pygeos  # NOQA
+    import shapely  # NOQA
 
     has_geo = True
 except ImportError:

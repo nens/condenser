@@ -15,7 +15,7 @@ import numpy as np
 if has_geo:
     from geoalchemy2.types import Geometry
     from geoalchemy2.functions import ST_AsBinary, ST_Transform
-    import pygeos
+    import shapely
 
 
 class NumpyQueryMixin:
@@ -33,12 +33,12 @@ class NumpyQueryMixin:
     # SchemaType, SmallInteger, Time, Unicode, UnicodeText
 
     # Geometry is only available if the optional dependencies geoalchemy2 and
-    # pygeos are present.
+    # shapely are present.
     if has_geo:
         default_numpy_settings[Geometry] = {
             "dtype": np.dtype("O"),
             "sql_cast": ST_AsBinary,
-            "numpy_cast": pygeos.from_wkb,
+            "numpy_cast": shapely.from_wkb,
         }
 
     def __init__(self, *args, **kwargs):
@@ -124,7 +124,7 @@ class NumpyQueryMixin:
           for PostGIS and `setsrid` for SQLite/spatialite)
         """
         if not has_geo:
-            raise ImportError("This function requires GeoAlchemy2 and pygeos")
+            raise ImportError("This function requires GeoAlchemy2 and shapely")
         srid = int(target_srid)
         new_columns = []
         for descr in self.column_descriptions:

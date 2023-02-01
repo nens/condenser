@@ -4,7 +4,7 @@ Changelog of condenser
 0.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Transition from pygeos to shapely 2.*.
 
 
 0.1.1 (2021-10-07)

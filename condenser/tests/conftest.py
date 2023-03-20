@@ -11,7 +11,9 @@ from sqlalchemy.sql import select, func
 
 import pytest
 
-requires_geo = pytest.mark.skipif(not has_geo, reason="requires GeoAlchemy2 and shapely")
+requires_geo = pytest.mark.skipif(
+    not has_geo, reason="requires GeoAlchemy2 and shapely"
+)
 
 
 @pytest.fixture(scope="session")

@@ -1,6 +1,12 @@
 Changelog of condenser
 ======================
 
+0.2.2 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
 0.2.1 (2023-03-20)
 ------------------
 

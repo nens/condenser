@@ -26,6 +26,6 @@ setup(
     name="condenser",
     packages=["condenser"],
     url="https://github.com/nens/condenser",
-    version='0.2.1.dev0',
+    version='0.2.1',
     zip_safe=False,
 )

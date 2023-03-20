@@ -1,7 +1,7 @@
 Changelog of condenser
 ======================
 
-0.2.1 (unreleased)
+0.2.1 (2023-03-20)
 ------------------
 
 - SQLAlchemy 2.0 compatibility fix (#12).

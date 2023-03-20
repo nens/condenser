@@ -21,7 +21,7 @@ def db_engine(request):
         # https://geoalchemy-2.readthedocs.io/en/latest/spatialite_tutorial.html
         listen(engine, "connect", load_spatialite)
         conn = engine.connect()
-        conn.execute(select([func.InitSpatialMetaData()]))
+        conn.execute(select(func.InitSpatialMetaData()))
         conn.close()
 
     session_factory = scoped_session(sessionmaker(bind=engine))

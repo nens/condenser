@@ -2,6 +2,7 @@ from .schema import Base
 from .schema import ModelOne
 from condenser import NumpyQuery
 from condenser.utils import load_spatialite, has_geo
+import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
@@ -10,7 +11,9 @@ from sqlalchemy.sql import select, func
 
 import pytest
 
-requires_geo = pytest.mark.skipif(not has_geo, reason="requires GeoAlchemy2 and shapely")
+requires_geo = pytest.mark.skipif(
+    not has_geo, reason="requires GeoAlchemy2 and shapely"
+)
 
 
 @pytest.fixture(scope="session")
@@ -21,7 +24,11 @@ def db_engine(request):
         # https://geoalchemy-2.readthedocs.io/en/latest/spatialite_tutorial.html
         listen(engine, "connect", load_spatialite)
         conn = engine.connect()
-        conn.execute(select([func.InitSpatialMetaData()]))
+
+        if sqlalchemy.__version__.startswith("2"):
+            conn.execute(select(func.InitSpatialMetaData()))
+        else:
+            conn.execute(select([func.InitSpatialMetaData()]))
         conn.close()
 
     session_factory = scoped_session(sessionmaker(bind=engine))
